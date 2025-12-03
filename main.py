@@ -1,6 +1,6 @@
-from flask import Flask, jsonify
-import pytds
 import os
+import pymssql
+from flask import Flask, jsonify
 
 app = Flask(__name__)
 
@@ -11,33 +11,23 @@ DB_NAME = os.getenv("DB_NAME")
 
 @app.route("/")
 def home():
-    return {"status": "API rodando!"}
+    return "API online!"
 
 @app.route("/dados")
-def get_dados():
-    try:
-        with pytds.connect(
-            server=DB_SERVER,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME,
-            port=1433,
-            encrypt=True,
-            trust_server_certificate=False
-        ) as conn:
-
-            cursor = conn.cursor()
-            cursor.execute("SELECT TOP 100 * FROM TAB_REGISTRO_VISITA_SUPERVISAO_CABECALHO")
-            rows = cursor.fetchall()
-
-            columns = [col[0] for col in cursor.description]
-
-            dados = [dict(zip(columns, row)) for row in rows]
-
-            return jsonify(dados)
-
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+def dados():
+    conn = pymssql.connect(
+        server=DB_SERVER,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        port=1433
+    )
+    cursor = conn.cursor(as_dict=True)
+    cursor.execute("SELECT TOP 10 * FROM TAB_REGISTRO_VISITA_SUPERVISAO_CABECALHO")
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(data)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=3000)
