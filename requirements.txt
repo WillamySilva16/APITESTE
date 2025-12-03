@@ -1,2 +1,2 @@
 Flask
-pytds
+pymssql==2.2.11
